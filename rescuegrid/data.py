@@ -19,7 +19,7 @@ def get_initial_incidents() -> List[Incident]:
             id="INC-101",
             title="Industrial Chemical Spill & Structural Breach",
             location="West End",
-            coordinates={"x": 120, "y": 170},
+            coordinates={"x": 90, "y": 130},
             base_severity=5,
             people_at_risk=12,
             age_minutes=24.0,
@@ -34,7 +34,7 @@ def get_initial_incidents() -> List[Incident]:
             id="INC-102",
             title="Subway Concourse Ceiling Collapse",
             location="Central Plaza",
-            coordinates={"x": 300, "y": 240},
+            coordinates={"x": 360, "y": 320},
             base_severity=4,
             people_at_risk=8,
             age_minutes=10.0,
@@ -49,7 +49,7 @@ def get_initial_incidents() -> List[Incident]:
             id="INC-103",
             title="Multi-Story Residential Complex Fire",
             location="North District",
-            coordinates={"x": 310, "y": 80},
+            coordinates={"x": 570, "y": 70},
             base_severity=3,
             people_at_risk=15,
             age_minutes=5.0,
@@ -64,7 +64,7 @@ def get_initial_incidents() -> List[Incident]:
             id="INC-104",
             title="Expressway Transit Van Rollover",
             location="Eastside Industrial",
-            coordinates={"x": 480, "y": 170},
+            coordinates={"x": 840, "y": 90},
             base_severity=2,
             people_at_risk=3,
             age_minutes=18.0,
@@ -79,7 +79,7 @@ def get_initial_incidents() -> List[Incident]:
             id="INC-105",
             title="Substation Transformer Smoke Cleared",
             location="Harbor Medical",
-            coordinates={"x": 420, "y": 380},
+            coordinates={"x": 580, "y": 400},
             base_severity=1,
             people_at_risk=0,
             age_minutes=65.0,
@@ -101,7 +101,7 @@ def get_initial_units() -> List[Unit]:
             id="U-01",
             name="Rescue Task Force 1",
             location="Central Plaza",
-            coordinates={"x": 285, "y": 230},
+            coordinates={"x": 460, "y": 180},
             skills=["hazmat", "heavy_extrication", "fire_suppression", "paramedic"],
             equipment=["hazmat_containment", "hydraulic_spreader", "thermal_imager", "first_aid_kit"],
             status="available"
@@ -110,7 +110,7 @@ def get_initial_units() -> List[Unit]:
             id="U-02",
             name="Hazmat Engine 7",
             location="West End",
-            coordinates={"x": 135, "y": 160},
+            coordinates={"x": 90, "y": 270},
             skills=["hazmat", "fire_suppression"],
             equipment=["hazmat_containment"],
             status="available"
@@ -119,7 +119,7 @@ def get_initial_units() -> List[Unit]:
             id="U-03",
             name="Rescue Ladder 4",
             location="Central Plaza",
-            coordinates={"x": 315, "y": 250},
+            coordinates={"x": 550, "y": 280},
             skills=["heavy_extrication", "paramedic"],
             equipment=["hydraulic_spreader", "first_aid_kit"],
             status="available"
@@ -128,7 +128,7 @@ def get_initial_units() -> List[Unit]:
             id="U-04",
             name="Medic Ambulance 12",
             location="North District",
-            coordinates={"x": 295, "y": 95},
+            coordinates={"x": 360, "y": 70},
             skills=["fire_suppression", "paramedic"],
             equipment=["thermal_imager", "first_aid_kit"],
             status="available"
@@ -142,7 +142,7 @@ def get_initial_hospitals() -> List[Hospital]:
             id="H-01",
             name="West End Urgent Care Clinic",
             location="West End",
-            coordinates={"x": 110, "y": 190},
+            coordinates={"x": 230, "y": 260},
             services=["general_emergency"],
             total_beds=10,
             available_beds=2
@@ -151,7 +151,7 @@ def get_initial_hospitals() -> List[Hospital]:
             id="H-02",
             name="Mercy General Medical Center",
             location="Central Plaza",
-            coordinates={"x": 325, "y": 215},
+            coordinates={"x": 460, "y": 350},
             services=["trauma_center", "general_emergency"],
             total_beds=40,
             available_beds=8
@@ -160,7 +160,7 @@ def get_initial_hospitals() -> List[Hospital]:
             id="H-03",
             name="St. Jude Regional Trauma & Burn Center",
             location="Harbor Medical",
-            coordinates={"x": 440, "y": 360},
+            coordinates={"x": 780, "y": 370},
             services=["trauma_center", "burn_unit", "general_emergency"],
             total_beds=50,
             available_beds=15
@@ -218,11 +218,11 @@ def get_initial_road_segments() -> List[RoadSegment]:
 
 def get_node_coordinates() -> Dict[str, Dict[str, int]]:
     return {
-        "West End": {"x": 120, "y": 170},
-        "North District": {"x": 300, "y": 80},
-        "Central Plaza": {"x": 300, "y": 240},
-        "Eastside Industrial": {"x": 480, "y": 170},
-        "Harbor Medical": {"x": 430, "y": 370}
+        "West End": {"x": 160, "y": 210},
+        "North District": {"x": 460, "y": 80},
+        "Central Plaza": {"x": 460, "y": 250},
+        "Eastside Industrial": {"x": 780, "y": 140},
+        "Harbor Medical": {"x": 680, "y": 370}
     }
 
 

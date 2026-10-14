@@ -167,9 +167,34 @@
             </div>
           </div>
 
+          <!-- SEARCH & QUICK FILTER CONTROLS -->
+          <div class="queue-filter-controls">
+            <div class="search-input-wrapper">
+              <svg class="search-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" id="incident-search-input" placeholder="Search incidents, skills, locations..." />
+              <button id="search-clear-btn" class="search-clear-btn" title="Clear search">&times;</button>
+            </div>
+            <div class="quick-filter-pills" id="quick-filter-pills">
+              <button class="filter-pill active" data-filter="all">All</button>
+              <button class="filter-pill" data-filter="critical">Critical (4-5)</button>
+              <button class="filter-pill" data-filter="escalated">Escalated</button>
+              <button class="filter-pill" data-filter="unassigned">Unassigned</button>
+            </div>
+          </div>
+
           <div class="incident-scroll-area" id="incident-queue-container">
             {% for inc in state.incidents %}
-              <div class="incident-row-card severity-{{ inc.base_severity }} {% if inc.status == 'completed' %}is-completed{% endif %}" data-incident-id="{{ inc.id }}">
+              <div class="incident-row-card severity-{{ inc.base_severity }} {% if inc.status == 'completed' %}is-completed{% endif %}" 
+                   data-incident-id="{{ inc.id }}" 
+                   data-severity="{{ inc.base_severity }}"
+                   data-status="{{ inc.status }}"
+                   data-escalated="{{ 'true' if inc.escalation_indicator else 'false' }}"
+                   data-assigned="{{ 'true' if inc.assigned_unit_id else 'false' }}"
+                   role="button" 
+                   tabindex="0" 
+                   title="Click to inspect telemetry for {{ inc.id }}">
                 
                 <div class="inc-card-top">
                   <div class="inc-id-cluster">
@@ -224,6 +249,10 @@
                   {% if inc.destination_hospital_id %}
                     <span class="hospital-dest-chip">Dest: {{ inc.destination_hospital_id }}</span>
                   {% endif %}
+                </div>
+
+                <div class="inc-inspect-prompt">
+                  <span class="prompt-text">Click to open interactive inspector &rarr;</span>
                 </div>
 
               </div>
@@ -349,6 +378,116 @@
       </div>
     </footer>
   </div>
+
+  <!-- INTERACTIVE INCIDENT INSPECTOR MODAL -->
+  <div id="inspector-modal" class="inspector-modal hidden" role="dialog" aria-modal="true" aria-labelledby="insp-title">
+    <div class="inspector-backdrop" id="inspector-backdrop"></div>
+    <div class="inspector-card">
+      <div class="inspector-header">
+        <div class="inspector-title-cluster">
+          <span class="inspector-id-tag" id="insp-id">INC-101</span>
+          <div>
+            <h3 class="inspector-title" id="insp-title">Incident Title</h3>
+            <div class="inspector-subtitle" id="insp-subtitle">District &bull; Active</div>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="insp-close-btn" title="Close Inspector">&times;</button>
+      </div>
+      
+      <div class="inspector-body">
+        <!-- Section: Priority Math Formula -->
+        <div class="inspector-section">
+          <div class="insp-section-title">Priority Formula Calculation Telemetry</div>
+          <div class="priority-math-grid">
+            <div class="math-card">
+              <span class="math-label">Base Severity (x25)</span>
+              <strong class="math-val" id="insp-base-sev">125</strong>
+            </div>
+            <div class="math-card">
+              <span class="math-label">Risk Count (x10)</span>
+              <strong class="math-val" id="insp-risk">120</strong>
+            </div>
+            <div class="math-card">
+              <span class="math-label">Age Urgency (x1.5)</span>
+              <strong class="math-val" id="insp-age">36</strong>
+            </div>
+            <div class="math-card">
+              <span class="math-label">Escalation Bonus (+30)</span>
+              <strong class="math-val" id="insp-escalation">+30</strong>
+            </div>
+          </div>
+          <div class="total-priority-banner">
+            <span>Total Calculated Priority Score:</span>
+            <strong id="insp-total-priority">311.0 Points</strong>
+          </div>
+        </div>
+
+        <!-- Section: Unit Capabilities & Dispatch Status -->
+        <div class="inspector-section">
+          <div class="insp-section-title">Unit Capabilities & Dispatch Assignment</div>
+          <div class="insp-info-card" id="insp-dispatch-card">
+            <div class="card-status-row">
+              <span class="badge badge-ok" id="insp-dispatch-status">ASSIGNED</span>
+              <strong id="insp-unit-name">Rescue Task Force 1 (U-01)</strong>
+            </div>
+            <div class="card-desc" id="insp-dispatch-details">
+              Eligible match: meets required hazmat and heavy extrication protocols.
+            </div>
+            <div class="card-skills-row" id="insp-required-skills">
+              <!-- Rendered chips -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Medical Facility Triage -->
+        <div class="inspector-section">
+          <div class="insp-section-title">Medical Triage & Destination Hospital</div>
+          <div class="insp-info-card" id="insp-hospital-card">
+            <div class="card-status-row">
+              <span class="badge badge-ok" id="insp-hosp-status">SUITABLE</span>
+              <strong id="insp-hosp-name">St. Jude Regional Trauma & Burn Center (H-03)</strong>
+            </div>
+            <div class="card-desc" id="insp-hosp-details">
+              15 available beds (casualty load: 5 pts). Specialized trauma and burn care verified.
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Primary Road Corridor Navigation -->
+        <div class="inspector-section">
+          <div class="insp-section-title">Evacuation & Navigation Corridor</div>
+          <div class="insp-info-card" id="insp-route-card">
+            <div class="card-status-row">
+              <span class="badge badge-ok" id="insp-route-status">SAFE DETOUR</span>
+              <span id="insp-route-distance">Estimated: 6.5 km</span>
+            </div>
+            <div class="card-desc" id="insp-route-steps">
+              Corridor avoids closed hazard segment SEG-WC via North District detour.
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Interactive Control Room Actions -->
+        <div class="inspector-actions">
+          <button class="btn btn-primary" id="insp-btn-ack">
+            <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+            Acknowledge Incident
+          </button>
+          <button class="btn btn-secondary" id="insp-btn-locate">
+            <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            Focus on Vector Radar
+          </button>
+          <button class="btn btn-secondary" id="insp-btn-siren">
+            <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Radio Unit Dispatch
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <script src="static/app.js"></script>
 </body>
