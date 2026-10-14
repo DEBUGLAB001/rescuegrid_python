@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dedicated-page-container">
+  
+  <div class="page-header-box">
+    <div>
+      <h1 class="page-title">Medical Facilities Network & Casualty Triage</h1>
+      <p class="page-desc">Regional trauma center capacities, burn unit readiness, and dynamic casualty transport destination matching.</p>
+    </div>
+    <div class="domain-stat-pill-lg">
+      {{ state.hospitals | length }} Medical Facilities &bull; Metro Healthcare Grid
+    </div>
+  </div>
+
+  <div class="two-column-split">
+    
+    <!-- LEFT COLUMN: HOSPITAL FACILITY DIRECTORY -->
+    <div class="content-box">
+      <div class="box-header">
+        <h2 class="box-title">Regional Hospital Directory & Bed Capacities</h2>
+        <span class="pill-tag">Live Bed Telemetry</span>
+      </div>
+      <div class="page-card-body">
+        {% for h in state.hospitals %}
+          <div class="hospital-facility-card">
+            <div class="hosp-card-top">
+              <div class="hosp-title-cluster">
+                <span class="hosp-id-badge">{{ h.id }}</span>
+                <div>
+                  <h3 class="hosp-name">{{ h.name }}</h3>
+                  <div class="hosp-location">{{ h.location }} District</div>
+                </div>
+              </div>
+              <div class="hosp-beds-badge">
+                <strong>{{ h.available_beds }}</strong> / {{ h.total_beds }} Beds
+              </div>
+            </div>
+
+            <!-- Bed Capacity Bar -->
+            <div class="hosp-capacity-meter">
+              <div class="meter-bar">
+                <div class="meter-fill" style="width: {{ (h.available_beds / h.total_beds) * 100 }}%;"></div>
+              </div>
+              <div class="meter-labels">
+                <span>{{ ((h.available_beds / h.total_beds) * 100) | round(1) }}% Available</span>
+                <span>Capacity: {{ h.total_beds }} Total Beds</span>
+              </div>
+            </div>
+
+            <!-- Specialized Medical Departments -->
+            <div class="hosp-services-cluster">
+              <span class="services-label">Departments:</span>
+              {% for s in h.services %}
+                <span class="chip {% if s == 'burn_unit' %}chip-burn{% elif s == 'trauma_center' %}chip-trauma{% else %}chip-skill{% endif %}">
+                  {{ s | replace('_', ' ') | title }}
+                </span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: INCIDENT CASUALTY TRIAGE MATCHING -->
+    <div class="content-box">
+      <div class="box-header">
+        <h2 class="box-title">Incident Casualty Triage Matching Matrix</h2>
+        <span class="pill-tag">Medical Services & Beds</span>
+      </div>
+      <div class="page-card-body">
+        {% for item in state.hospital_suitability.details %}
+          <div class="domain-row-item dedicated-row-item">
+            <div class="row-header">
+              <div class="row-inc-cluster">
+                <span class="row-inc-id">{{ item.incident_id }}</span>
+                <span class="row-severity-tag">{{ item.patient_count }} Casualty Patients</span>
+              </div>
+              {% if item.is_suitable %}
+                <span class="badge-status-ok">SUITABLE FACILITY</span>
+              {% else %}
+                <span class="badge-status-err">UNSUITABLE FACILITY</span>
+              {% endif %}
+            </div>
+            
+            <div class="row-desc">
+              Target Destination: <strong>{{ item.hospital_name }}</strong> (Available Beds: {{ item.available_beds }}/{{ item.total_beds }})
+            </div>
+
+            {% if not item.is_suitable %}
+              <div class="row-warning">
+                {% if not item.services_met %}
+                  <strong>Lacks Critical Services:</strong> {{ item.missing_services | join(', ') }}.
+                {% endif %}
+                {% if not item.capacity_met %}
+                  <strong>Bed Deficit:</strong> Insufficient capacity for {{ item.patient_count }} patients.
+                {% endif %}
+              </div>
+            {% endif %}
+
+            <div class="row-reqs">
+              <span class="req-label">Required Medical Services:</span>
+              {% for s in item.required_services %}
+                <span class="chip chip-skill">{{ s }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

@@ -48,10 +48,11 @@ def compute_asset_hash() -> str:
     """Compute combined hash of frontend templates, static assets, and backend modules."""
     hasher = hashlib.md5()
     watch_files = [
-        os.path.join("templates", "index.html"),
         os.path.join("static", "styles.css"),
         os.path.join("static", "app.js")
     ]
+    # Watch all HTML templates
+    watch_files.extend(glob.glob(os.path.join("templates", "*.html")))
     # Also watch all python backend domain modules
     py_files = glob.glob(os.path.join("rescuegrid", "*.py"))
     watch_files.extend(py_files)
@@ -69,11 +70,52 @@ def compute_asset_hash() -> str:
 
 
 @app.route("/")
+@app.route("/map")
 def index():
     service = get_service()
     state = service.get_full_state()
     state["asset_version"] = compute_asset_hash()
-    return render_template("index.html", state=state)
+    return render_template("map.html", state=state, current_page="map")
+
+
+@app.route("/incidents")
+def incidents_page():
+    service = get_service()
+    state = service.get_full_state()
+    state["asset_version"] = compute_asset_hash()
+    return render_template("incidents.html", state=state, current_page="incidents")
+
+
+@app.route("/dispatch")
+def dispatch_page():
+    service = get_service()
+    state = service.get_full_state()
+    state["asset_version"] = compute_asset_hash()
+    return render_template("dispatch.html", state=state, current_page="dispatch")
+
+
+@app.route("/facilities")
+def facilities_page():
+    service = get_service()
+    state = service.get_full_state()
+    state["asset_version"] = compute_asset_hash()
+    return render_template("facilities.html", state=state, current_page="facilities")
+
+
+@app.route("/routing")
+def routing_page():
+    service = get_service()
+    state = service.get_full_state()
+    state["asset_version"] = compute_asset_hash()
+    return render_template("routing.html", state=state, current_page="routing")
+
+
+@app.route("/standby")
+def standby_page():
+    service = get_service()
+    state = service.get_full_state()
+    state["asset_version"] = compute_asset_hash()
+    return render_template("standby.html", state=state, current_page="standby")
 
 
 @app.route("/api/state", methods=["GET"])

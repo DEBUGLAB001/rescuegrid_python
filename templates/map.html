@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-workspace">
+  <!-- LEFT WORKSPACE: FULL VECTOR TELEMETRY MAP -->
+  <section class="workspace-left">
+    <div class="content-box map-box">
+      <div class="box-header">
+        <div class="box-title-group">
+          <h2 class="box-title">Metropolitan Grid Telemetry Map</h2>
+          <span class="pill-tag">LIVE VECTOR RADAR</span>
+        </div>
+        <div class="map-legend">
+          <span class="legend-item"><span class="legend-dot dot-incident"></span> Emergency Incident</span>
+          <span class="legend-item"><span class="legend-dot dot-unit"></span> Response Unit</span>
+          <span class="legend-item"><span class="legend-dot dot-hospital"></span> Hospital Facility</span>
+          <span class="legend-item"><span class="legend-line line-route"></span> Detour Corridor</span>
+          <span class="legend-item"><span class="legend-line line-closed"></span> Closed Road</span>
+        </div>
+      </div>
+
+      <div class="map-wrapper" id="svg-map-wrapper">
+        <!-- Dynamic Vector Map rendered via app.js -->
+      </div>
+    </div>
+
+    <!-- TACTICAL ROUTE CORRIDOR CARD -->
+    <div class="content-box route-box">
+      <div class="box-header">
+        <div class="box-title-group">
+          <h3 class="box-title">Primary Incident Corridor Navigation</h3>
+          <span class="pill-tag">{{ state.routing.start }} &rarr; {{ state.routing.destination }}</span>
+        </div>
+        <div class="cost-tag" id="route-cost-badge">
+          Total Travel Distance: <strong>{{ state.routing.total_cost }} km</strong>
+        </div>
+      </div>
+      
+      <div class="route-details-body">
+        <div class="route-path-steps" id="route-segments-list">
+          {% for node in state.routing.path %}
+            <span class="step-pill">{{ node }}</span>
+            {% if not loop.last %}
+              <span class="step-arrow">&rarr;</span>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <div id="route-closure-alert" class="route-status-alert {% if state.routing.is_valid %}alert-success{% else %}alert-hazard{% endif %}">
+          {% if state.routing.is_valid %}
+            <svg class="alert-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span><strong>SAFE CORRIDOR:</strong> Route successfully bypasses closed hazard corridor via North District detour.</span>
+          {% else %}
+            <svg class="alert-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/>
+            </svg>
+            <span><strong>CRITICAL SAFETY HAZARD:</strong> Route traverses closed road segment(s): {{ state.routing.traversed_closed_roads | join(', ') }}!</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT WORKSPACE: QUICK INCIDENT FEED -->
+  <section class="workspace-right">
+    <div class="content-box incident-box">
+      <div class="box-header">
+        <div class="box-title-group">
+          <h2 class="box-title">Active Response Queue</h2>
+          <span class="count-badge" id="incident-count-badge">{{ state.incidents | length }}</span>
+        </div>
+        <a href="incidents" class="btn btn-secondary btn-sm" title="Open full incident console">
+          Full Console &rarr;
+        </a>
+      </div>
+
+      <!-- Quick Filter Controls -->
+      <div class="queue-filter-controls">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="incident-search-input" placeholder="Search incidents, skills, locations..." />
+          <button id="search-clear-btn" class="search-clear-btn" title="Clear search">&times;</button>
+        </div>
+        <div class="quick-filter-pills" id="quick-filter-pills">
+          <button class="filter-pill active" data-filter="all">All</button>
+          <button class="filter-pill" data-filter="critical">Critical (4-5)</button>
+          <button class="filter-pill" data-filter="escalated">Escalated</button>
+          <button class="filter-pill" data-filter="unassigned">Unassigned</button>
+        </div>
+      </div>
+
+      <div class="incident-scroll-area" id="incident-queue-container">
+        {% for inc in state.incidents %}
+          <div class="incident-row-card severity-{{ inc.base_severity }} {% if inc.status == 'completed' %}is-completed{% endif %}" 
+               data-incident-id="{{ inc.id }}" 
+               data-severity="{{ inc.base_severity }}"
+               data-status="{{ inc.status }}"
+               data-escalated="{{ 'true' if inc.escalation_indicator else 'false' }}"
+               data-assigned="{{ 'true' if inc.assigned_unit_id else 'false' }}"
+               role="button" 
+               tabindex="0" 
+               title="Click to inspect telemetry for {{ inc.id }}">
+            
+            <div class="inc-card-top">
+              <div class="inc-id-cluster">
+                <span class="inc-id-badge">{{ inc.id }}</span>
+                {% if inc.priority_score is not none %}
+                  <span class="prio-score-badge {% if inc.priority_score >= 200 %}prio-high{% endif %}">
+                    PRIORITY: {{ inc.priority_score }}
+                  </span>
+                {% endif %}
+                {% if inc.escalation_indicator %}
+                  <span class="escalation-badge">ESCALATED</span>
+                {% endif %}
+              </div>
+              <span class="inc-severity-label">Severity {{ inc.base_severity }}/5</span>
+            </div>
+
+            <div class="inc-title">{{ inc.title }}</div>
+
+            <div class="inc-meta-grid">
+              <div class="meta-item">
+                <span class="meta-icon">&bull;</span> Location: <strong>{{ inc.location }}</strong>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">&bull;</span> Risk: <strong>{{ inc.people_at_risk }} people</strong>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">&bull;</span> Age: <strong>{{ inc.age_minutes }} min</strong>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">&bull;</span> Casualties: <strong>{{ inc.patient_count }} pts</strong>
+              </div>
+            </div>
+
+            <div class="inc-requirements-bar">
+              <span class="req-label">Needs:</span>
+              {% for s in inc.required_skills %}
+                <span class="chip chip-skill">{{ s }}</span>
+              {% endfor %}
+              {% for e in inc.required_equipment %}
+                <span class="chip chip-equip">{{ e }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="inc-card-bottom">
+              <div class="dispatch-status-indicator">
+                {% if inc.assigned_unit_id %}
+                  <span class="unit-assigned-chip">Assigned: {{ inc.assigned_unit_id }}</span>
+                {% else %}
+                  <span class="unit-unassigned-chip">UNASSIGNED (Deficit)</span>
+                {% endif %}
+              </div>
+              {% if inc.destination_hospital_id %}
+                <span class="hospital-dest-chip">Dest: {{ inc.destination_hospital_id }}</span>
+              {% endif %}
+            </div>
+
+            <div class="inc-inspect-prompt">
+              <span class="prompt-text">Click to open interactive inspector &rarr;</span>
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

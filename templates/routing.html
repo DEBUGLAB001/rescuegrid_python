@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dedicated-page-container">
+  
+  <div class="page-header-box">
+    <div>
+      <h1 class="page-title">Road Corridor Network & Hazard Detour Routing</h1>
+      <p class="page-desc">Dijkstra shortest path router, closed road hazard avoidance, and metropolitan detour navigation.</p>
+    </div>
+    <div class="domain-stat-pill-lg">
+      {{ state.metrics.closed_roads_count }} Closed Hazard Corridors &bull; {{ state.road_segments | length }} Road Segments
+    </div>
+  </div>
+
+  <!-- Primary Routing Navigation Card -->
+  <div class="content-box mb-4">
+    <div class="box-header">
+      <div class="box-title-group">
+        <h2 class="box-title">Primary Incident Corridor Routing (West End &rarr; Central Plaza)</h2>
+        <span class="pill-tag">{{ state.routing.start }} &rarr; {{ state.routing.destination }}</span>
+      </div>
+      <div class="cost-tag">
+        Total Corridor Cost: <strong>{{ state.routing.total_cost }} km</strong>
+      </div>
+    </div>
+    <div class="route-details-body">
+      <div class="route-path-steps">
+        {% for node in state.routing.path %}
+          <span class="step-pill">{{ node }}</span>
+          {% if not loop.last %}
+            <span class="step-arrow">&rarr;</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="route-status-alert {% if state.routing.is_valid %}alert-success{% else %}alert-hazard{% endif %}">
+        {% if state.routing.is_valid %}
+          <svg class="alert-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <div>
+            <strong>SAFE CORRIDOR DETOUR:</strong>
+            The routing algorithm successfully detours around closed hazard corridor SEG-WC via North District (West End &rarr; North District &rarr; Central Plaza = 6.5 km). Zero closed hazard corridors traversed.
+          </div>
+        {% else %}
+          <svg class="alert-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/>
+          </svg>
+          <div>
+            <strong>CRITICAL ROUTE SAFETY HAZARD:</strong>
+            Route erroneously traverses closed road segment(s): <strong>{{ state.routing.traversed_closed_roads | join(', ') }}</strong> (Distance: {{ state.routing.total_cost }} km).
+            Emergency ambulances risk severe contamination and bridge collapse!
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Road Segment Directory Table -->
+  <div class="content-box">
+    <div class="box-header">
+      <h2 class="box-title">Metropolitan Road Segment Status Directory</h2>
+      <span class="pill-tag">{{ state.road_segments | length }} Total Corridors</span>
+    </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Segment ID</th>
+            <th>Origin Node</th>
+            <th>Destination Node</th>
+            <th>Distance</th>
+            <th>Corridor Status</th>
+            <th>Closure Notes & Advisory</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for seg in state.road_segments %}
+            <tr class="{% if seg.is_closed %}row-hazard{% endif %}">
+              <td><strong>{{ seg.id }}</strong></td>
+              <td>{{ seg.from_node }}</td>
+              <td>{{ seg.to_node }}</td>
+              <td>{{ seg.distance }} km</td>
+              <td>
+                {% if seg.is_closed %}
+                  <span class="badge badge-err">CLOSED HAZARD</span>
+                {% else %}
+                  <span class="badge badge-ok">OPEN CORRIDOR</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if seg.is_closed %}
+                  <span class="text-red font-semibold">{{ seg.closure_reason }}</span>
+                {% else %}
+                  <span class="text-muted">Nominal traffic flow</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

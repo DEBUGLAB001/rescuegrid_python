@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dedicated-page-container">
+  
+  <div class="page-header-box">
+    <div>
+      <h1 class="page-title">Standby Resource Allocation & Coverage Optimization</h1>
+      <p class="page-desc">Knapsack-style resource optimization under budget constraints to maximize protected municipal priority points.</p>
+    </div>
+    <div class="domain-stat-pill-lg {% if state.standby_coverage.is_optimal %}bg-teal-light text-teal{% else %}bg-amber-light text-amber{% endif %}">
+      {% if state.standby_coverage.is_optimal %}
+        OPTIMAL ALLOCATION (200 POINTS)
+      {% else %}
+        SUBOPTIMAL GREEDY ALLOCATION (150 POINTS)
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="two-column-split">
+    
+    <!-- LEFT COLUMN: DEPLOYMENT METERS & STATUS -->
+    <div class="content-box">
+      <div class="box-header">
+        <h2 class="box-title">Resource Budget Utilization</h2>
+        <span class="pill-tag">{{ state.standby_coverage.budget_used }} / {{ state.standby_coverage.budget_limit }} Units</span>
+      </div>
+      <div class="page-card-body">
+        
+        <div class="standby-kpi-banner mb-4">
+          <div class="kpi-block">
+            <span class="kpi-label">TOTAL PRIORITY SECURED</span>
+            <strong class="kpi-val {% if state.standby_coverage.is_optimal %}text-teal{% else %}text-amber{% endif %}">
+              {{ state.standby_coverage.total_priority }} Points
+            </strong>
+          </div>
+          <div class="kpi-block">
+            <span class="kpi-label">BUDGET DEPLOYED</span>
+            <strong class="kpi-val text-blue">
+              {{ state.standby_coverage.budget_used }} / {{ state.standby_coverage.budget_limit }}
+            </strong>
+          </div>
+          <div class="kpi-block">
+            <span class="kpi-label">RESERVE REMAINING</span>
+            <strong class="kpi-val text-muted">
+              {{ state.standby_coverage.budget_remaining }} Units
+            </strong>
+          </div>
+        </div>
+
+        <div class="meter-box mb-4">
+          <div class="meter-labels">
+            <span>Budget Utilization: {{ ((state.standby_coverage.budget_used / state.standby_coverage.budget_limit) * 100) | round(1) }}%</span>
+            <span>Limit: {{ state.standby_coverage.budget_limit }}</span>
+          </div>
+          <div class="meter-bar">
+            <div class="meter-fill" style="width: {{ (state.standby_coverage.budget_used / state.standby_coverage.budget_limit) * 100 }}%;"></div>
+          </div>
+        </div>
+
+        <!-- Optimal vs Suboptimal Explanation -->
+        <div class="route-status-alert {% if state.standby_coverage.is_optimal %}alert-success{% else %}alert-hazard{% endif %}">
+          {% if state.standby_coverage.is_optimal %}
+            <div>
+              <strong>GLOBAL OPTIMAL SOLUTION ACHIEVED:</strong>
+              The knapsack solver selected squads <strong>{{ state.standby_coverage.selected_unit_ids | join(' + ') }}</strong> at cost 10, achieving maximum coverage of all 4 distinct risk zones (200 priority points).
+            </div>
+          {% else %}
+            <div>
+              <strong>SUBOPTIMAL GREEDY ALLOCATION:</strong>
+              Greedy heuristic selected <strong>{{ state.standby_coverage.selected_unit_ids | join(', ') }}</strong> (Cost: 7, Priority: 150 pts), leaving 3 units of budget unspent and failing to protect COV-4 (Harbor Fuel Depot Evacuation Risk).
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: SELECTED SQUADS & VULNERABILITIES -->
+    <div class="content-box">
+      <div class="box-header">
+        <h2 class="box-title">Selected Standby Squads & Target Zones</h2>
+        <span class="pill-tag">{{ state.standby_coverage.selected_units | length }} Squads Deployed</span>
+      </div>
+      <div class="page-card-body">
+        
+        <h3 class="subsection-title">Deployed Standby Squads:</h3>
+        <div class="standby-units-stack mb-4">
+          {% for u in state.standby_coverage.selected_units %}
+            <div class="standby-squad-detailed-card">
+              <div class="squad-top">
+                <div class="squad-title-cluster">
+                  <span class="squad-id-tag">{{ u.id }}</span>
+                  <strong>{{ u.name }}</strong>
+                </div>
+                <span class="squad-cost-tag">Cost: {{ u.cost }} Units</span>
+              </div>
+              <div class="squad-covers-bar">
+                <span>Covers:</span>
+                {% for cid in u.covered_incidents %}
+                  <span class="chip chip-skill">{{ cid }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <h3 class="subsection-title">City Vulnerability Coverage Matrix:</h3>
+        <div class="covered-zones-grid">
+          {% for cid in ['COV-1', 'COV-2', 'COV-3', 'COV-4'] %}
+            {% set is_covered = cid in state.standby_coverage.covered_incidents %}
+            <div class="zone-card {% if is_covered %}zone-covered{% else %}zone-missed{% endif %}">
+              <div class="zone-id">{{ cid }}</div>
+              <div class="zone-name">
+                {% if cid == 'COV-1' %}West Grid Chemical
+                {% elif cid == 'COV-2' %}Central Transit Junction
+                {% elif cid == 'COV-3' %}North Substation Power
+                {% elif cid == 'COV-4' %}Harbor Fuel Depot
+                {% endif %}
+              </div>
+              <div class="zone-status">
+                {% if is_covered %}
+                  <span class="badge badge-ok">PROTECTED (50 PTS)</span>
+                {% else %}
+                  <span class="badge badge-err">UNPROTECTED (0 PTS)</span>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

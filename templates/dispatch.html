@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dedicated-page-container">
+  
+  <div class="page-header-box">
+    <div>
+      <h1 class="page-title">Unit Fleet & Bipartite Dispatch Matching</h1>
+      <p class="page-desc">Global maximum matching algorithm, skill & equipment verification, and emergency response allocation.</p>
+    </div>
+    <div class="domain-stat-pill-lg">
+      {{ state.dispatch.total_assigned }} Assigned &bull; {{ state.dispatch.total_unassigned }} Deficit
+    </div>
+  </div>
+
+  <div class="two-column-split">
+    
+    <!-- LEFT COLUMN: RESPONSE UNIT FLEET -->
+    <div class="content-box">
+      <div class="box-header">
+        <h2 class="box-title">Active Response Unit Fleet</h2>
+        <span class="pill-tag">{{ state.units | length }} Units</span>
+      </div>
+      <div class="page-card-body">
+        {% for u in state.units %}
+          <div class="fleet-unit-card">
+            <div class="fleet-unit-header">
+              <div class="fleet-unit-id-cluster">
+                <span class="fleet-id-badge">{{ u.id }}</span>
+                <strong>{{ u.name }}</strong>
+              </div>
+              <span class="badge {% if u.status == 'assigned' %}badge-ok{% else %}badge-blue{% endif %}">
+                {{ u.status | upper }}
+              </span>
+            </div>
+            
+            <div class="fleet-location">
+              District Base: <strong>{{ u.location }}</strong>
+            </div>
+
+            <div class="fleet-capabilities">
+              <div class="fleet-cap-label">Skills:</div>
+              <div class="chips-wrap">
+                {% for s in u.skills %}
+                  <span class="chip chip-skill">{{ s }}</span>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="fleet-capabilities">
+              <div class="fleet-cap-label">Equipment:</div>
+              <div class="chips-wrap">
+                {% for e in u.equipment %}
+                  <span class="chip chip-equip">{{ e }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: DISPATCH ALLOCATION MATRIX -->
+    <div class="content-box">
+      <div class="box-header">
+        <h2 class="box-title">Global Dispatch Matching Matrix</h2>
+        <span class="pill-tag">Bipartite Augmenting Match</span>
+      </div>
+      <div class="page-card-body">
+        {% for item in state.dispatch.details %}
+          <div class="domain-row-item dedicated-row-item">
+            <div class="row-header">
+              <div class="row-inc-cluster">
+                <span class="row-inc-id">{{ item.incident_id }}</span>
+                <span class="row-severity-tag">Severity {{ item.base_severity }}/5</span>
+              </div>
+              {% if item.status == 'assigned' %}
+                <span class="badge-status-ok">{{ item.unit_name }}</span>
+              {% else %}
+                <span class="badge-status-err">UNASSIGNED DEFICIT</span>
+              {% endif %}
+            </div>
+            <div class="row-desc">{{ item.explanation }}</div>
+            <div class="row-reqs">
+              <span class="req-label">Required:</span>
+              {% for s in item.required_skills %}
+                <span class="chip chip-skill">{{ s }}</span>
+              {% endfor %}
+              {% for e in item.required_equipment %}
+                <span class="chip chip-equip">{{ e }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

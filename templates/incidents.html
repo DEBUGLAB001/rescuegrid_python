@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dedicated-page-container">
+  
+  <div class="page-header-box">
+    <div>
+      <h1 class="page-title">Incident Response Operations Console</h1>
+      <p class="page-desc">Real-time emergency queue triage, dynamic priority calculation, and casualty management.</p>
+    </div>
+    <div class="tab-pill-group">
+      <button class="tab-item active" data-tab="active" id="tab-active">Active ({{ state.metrics.active_incidents_count }})</button>
+      <button class="tab-item" data-tab="completed" id="tab-completed">Completed ({{ state.incidents | length - state.metrics.active_incidents_count }})</button>
+      <button class="tab-item" data-tab="all" id="tab-all">All ({{ state.incidents | length }})</button>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="dedicated-filter-strip">
+    <div class="search-input-wrapper flex-grow">
+      <svg class="search-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="incident-search-input" placeholder="Search incidents by ID, title, skills, or district..." />
+      <button id="search-clear-btn" class="search-clear-btn" title="Clear search">&times;</button>
+    </div>
+    <div class="quick-filter-pills" id="quick-filter-pills">
+      <button class="filter-pill active" data-filter="all">All Severities</button>
+      <button class="filter-pill" data-filter="critical">Critical (Severity 4-5)</button>
+      <button class="filter-pill" data-filter="escalated">Escalated Alerts</button>
+      <button class="filter-pill" data-filter="unassigned">Unassigned Deficit</button>
+    </div>
+  </div>
+
+  <!-- Incident Grid Cards -->
+  <div class="incident-cards-deck" id="incident-queue-container">
+    {% for inc in state.incidents %}
+      <div class="incident-row-card dedicated-deck-card severity-{{ inc.base_severity }} {% if inc.status == 'completed' %}is-completed{% endif %}" 
+           data-incident-id="{{ inc.id }}" 
+           data-severity="{{ inc.base_severity }}"
+           data-status="{{ inc.status }}"
+           data-escalated="{{ 'true' if inc.escalation_indicator else 'false' }}"
+           data-assigned="{{ 'true' if inc.assigned_unit_id else 'false' }}"
+           role="button" 
+           tabindex="0" 
+           title="Click to inspect telemetry for {{ inc.id }}">
+        
+        <div class="inc-card-top">
+          <div class="inc-id-cluster">
+            <span class="inc-id-badge">{{ inc.id }}</span>
+            {% if inc.priority_score is not none %}
+              <span class="prio-score-badge {% if inc.priority_score >= 200 %}prio-high{% endif %}">
+                PRIORITY: {{ inc.priority_score }}
+              </span>
+            {% endif %}
+            {% if inc.escalation_indicator %}
+              <span class="escalation-badge">ESCALATED</span>
+            {% endif %}
+          </div>
+          <span class="inc-severity-label">Severity {{ inc.base_severity }}/5</span>
+        </div>
+
+        <div class="inc-title">{{ inc.title }}</div>
+
+        <div class="inc-meta-grid">
+          <div class="meta-item">
+            <span class="meta-icon">&bull;</span> District: <strong>{{ inc.location }}</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-icon">&bull;</span> Population at Risk: <strong>{{ inc.people_at_risk }} people</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-icon">&bull;</span> Incident Age: <strong>{{ inc.age_minutes }} min</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-icon">&bull;</span> Casualty Load: <strong>{{ inc.patient_count }} patients</strong>
+          </div>
+        </div>
+
+        <div class="inc-requirements-bar">
+          <span class="req-label">Required Capabilities:</span>
+          {% for s in inc.required_skills %}
+            <span class="chip chip-skill">{{ s }}</span>
+          {% endfor %}
+          {% for e in inc.required_equipment %}
+            <span class="chip chip-equip">{{ e }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="inc-card-bottom">
+          <div class="dispatch-status-indicator">
+            {% if inc.assigned_unit_id %}
+              <span class="unit-assigned-chip">Assigned Unit: {{ inc.assigned_unit_id }}</span>
+            {% else %}
+              <span class="unit-unassigned-chip">DEFICIT (UNASSIGNED)</span>
+            {% endif %}
+          </div>
+          {% if inc.destination_hospital_id %}
+            <span class="hospital-dest-chip">Medical Triage: {{ inc.destination_hospital_id }}</span>
+          {% endif %}
+        </div>
+
+        <div class="inc-inspect-prompt">
+          <span class="prompt-text">Click to open interactive inspector &rarr;</span>
+        </div>
+
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

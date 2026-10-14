@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RescueGrid | Emergency Response Operations Control</title>
+  <meta name="description" content="Municipal emergency dispatch and response optimization control dashboard for Aethelgard Metro.">
+  <link rel="stylesheet" href="static/styles.css">
+</head>
+<body class="theme-light">
+  <div id="app" class="dashboard-container">
+    
+    <!-- TOP NAVIGATION BAR -->
+    <header class="top-bar">
+      <div class="brand-section">
+        <div class="beacon-indicator pulse-beacon"></div>
+        <div class="brand-text">
+          <div class="brand-title">RESCUEGRID <span class="brand-badge">CONTROL ROOM</span></div>
+          <div class="brand-subtitle">{{ state.city.city_name }} &bull; {{ state.city.jurisdiction }}</div>
+        </div>
+      </div>
+
+      <div class="status-section">
+        <div class="status-badge" id="operating-status-badge">
+          <span class="status-dot"></span>
+          <span>{{ state.city.operating_status }}</span>
+        </div>
+        <div class="connection-badge" id="connection-status">
+          <span class="live-pulse"></span>
+          <span id="connection-text">LIVE STREAM</span>
+        </div>
+        <div class="timestamp-display">
+          <span class="label">SYNC:</span>
+          <span id="last-updated-time">{{ state.last_updated }}</span>
+        </div>
+      </div>
+
+      <div class="actions-section">
+        <button id="btn-recompute" class="btn btn-primary" title="Recompute dispatch and routing">
+          <svg class="icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M23 4v6h-6M1 20v-6h6M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+          </svg>
+          Recompute Dispatch
+        </button>
+        <button id="btn-refresh" class="btn btn-secondary" title="Refresh state from backend">
+          <svg class="icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          Refresh Data
+        </button>
+      </div>
+    </header>
+
+    <!-- SECTION NAVIGATION TABS -->
+    <nav class="main-nav-tabs">
+      <a href="./" class="nav-tab-item {% if current_page == 'map' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          <line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>
+        </svg>
+        Telemetry Map
+      </a>
+      <a href="incidents" class="nav-tab-item {% if current_page == 'incidents' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        Incident Queue
+        <span class="nav-pill-count">{{ state.incidents | length }}</span>
+      </a>
+      <a href="dispatch" class="nav-tab-item {% if current_page == 'dispatch' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+          <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
+        Unit Dispatch
+      </a>
+      <a href="facilities" class="nav-tab-item {% if current_page == 'facilities' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 3v15"/>
+          <path d="M9 9h.01M9 13h.01M9 17h.01M17 9h.01M17 13h.01M17 17h.01"/>
+        </svg>
+        Medical Facilities
+      </a>
+      <a href="routing" class="nav-tab-item {% if current_page == 'routing' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a4.5 4.5 0 0 0 4.5-4.5v-1a4.5 4.5 0 0 0-4.5-4.5H6"/>
+          <circle cx="6" cy="9" r="3"/>
+        </svg>
+        Hazard Routing
+      </a>
+      <a href="standby" class="nav-tab-item {% if current_page == 'standby' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Standby Coverage
+      </a>
+    </nav>
+
+    <!-- METRICS TELEMETRY STRIP -->
+    <section class="telemetry-bar">
+      <div class="metric-card">
+        <div class="metric-label">ACTIVE EMERGENCIES</div>
+        <div class="metric-value text-red" id="metric-active-incidents">{{ state.metrics.active_incidents_count }}</div>
+        <div class="metric-sub">Requiring immediate response</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">RESPONSE UNITS ACTIVE</div>
+        <div class="metric-value text-teal" id="metric-units-assigned">{{ state.metrics.total_units_assigned }}</div>
+        <div class="metric-sub">Available reserve: {{ state.metrics.total_units_available }}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">CRITICAL DEFICIT</div>
+        <div class="metric-value {% if state.metrics.critical_unassigned_count > 0 %}text-red{% else %}text-teal{% endif %}" id="metric-unassigned">
+          {{ state.metrics.critical_unassigned_count }}
+        </div>
+        <div class="metric-sub">
+          {% if state.metrics.critical_unassigned_count > 0 %}UNASSIGNED INCIDENTS{% else %}ALL INCIDENTS SERVED{% endif %}
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">HAZARD CLOSURES</div>
+        <div class="metric-value text-amber" id="metric-closed-roads">{{ state.metrics.closed_roads_count }}</div>
+        <div class="metric-sub">Road corridors blocked</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">STANDBY COVERAGE</div>
+        <div class="metric-value text-cyan" id="metric-standby-prio">{{ state.standby_coverage.total_priority }} pts</div>
+        <div class="metric-sub">Budget: {{ state.standby_coverage.budget_used }}/{{ state.standby_coverage.budget_limit }} used</div>
+      </div>
+    </section>
+
+    <!-- MAIN PAGE CONTENT (DYNAMIC) -->
+    <main class="page-content-wrapper">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- FOOTER STATUS BAR -->
+    <footer class="bottom-bar">
+      <div class="footer-left">
+        <span class="terminal-prompt">&gt;</span> RESCUEGRID MUNICIPAL OPERATIONS CONSOLE &bull; JINJA2 / FLASK ENGINE
+      </div>
+      <div class="footer-right">
+        <span id="asset-hash-display">BUILD: {{ state.asset_version[:8] }}</span> &bull; 
+        <span>POLL: 1.5s</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- INTERACTIVE INCIDENT INSPECTOR MODAL -->
+  <div id="inspector-modal" class="inspector-modal hidden" role="dialog" aria-modal="true" aria-labelledby="insp-title">
+    <div class="inspector-backdrop" id="inspector-backdrop"></div>
+    <div class="inspector-card">
+      <div class="inspector-header">
+        <div class="inspector-title-cluster">
+          <span class="inspector-id-tag" id="insp-id">INC-101</span>
+          <div>
+            <h3 class="inspector-title" id="insp-title">Incident Title</h3>
+            <div class="inspector-subtitle" id="insp-subtitle">District &bull; Active</div>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="insp-close-btn" title="Close Inspector">&times;</button>
+      </div>
+      
+      <div class="inspector-body">
+        <!-- Section: Priority Math Formula -->
+        <div class="inspector-section">
+          <div class="insp-section-title">Priority Formula Calculation Telemetry</div>
+          <div class="priority-math-grid">
+            <div class="math-card">
+              <span class="math-label">Base Severity (x25)</span>
+              <strong class="math-val" id="insp-base-sev">125</strong>
+            </div>
+            <div class="math-card">
+              <span class="math-label">Risk Count (x10)</span>
+              <strong class="math-val" id="insp-risk">120</strong>
+            </div>
+            <div class="math-card">
+              <span class="math-label">Age Urgency (x1.5)</span>
+              <strong class="math-val" id="insp-age">36</strong>
+            </div>
+            <div class="math-card">
+              <span class="math-label">Escalation Bonus (+30)</span>
+              <strong class="math-val" id="insp-escalation">+30</strong>
+            </div>
+          </div>
+          <div class="total-priority-banner">
+            <span>Total Calculated Priority Score:</span>
+            <strong id="insp-total-priority">311.0 Points</strong>
+          </div>
+        </div>
+
+        <!-- Section: Unit Capabilities & Dispatch Status -->
+        <div class="inspector-section">
+          <div class="insp-section-title">Unit Capabilities & Dispatch Assignment</div>
+          <div class="insp-info-card" id="insp-dispatch-card">
+            <div class="card-status-row">
+              <span class="badge badge-ok" id="insp-dispatch-status">ASSIGNED</span>
+              <strong id="insp-unit-name">Rescue Task Force 1 (U-01)</strong>
+            </div>
+            <div class="card-desc" id="insp-dispatch-details">
+              Eligible match: meets required hazmat and heavy extrication protocols.
+            </div>
+            <div class="card-skills-row" id="insp-required-skills">
+              <!-- Rendered chips -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Medical Facility Triage -->
+        <div class="inspector-section">
+          <div class="insp-section-title">Medical Triage & Destination Hospital</div>
+          <div class="insp-info-card" id="insp-hospital-card">
+            <div class="card-status-row">
+              <span class="badge badge-ok" id="insp-hosp-status">SUITABLE</span>
+              <strong id="insp-hosp-name">St. Jude Regional Trauma & Burn Center (H-03)</strong>
+            </div>
+            <div class="card-desc" id="insp-hosp-details">
+              15 available beds (casualty load: 5 pts). Specialized trauma and burn care verified.
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Primary Road Corridor Navigation -->
+        <div class="inspector-section">
+          <div class="insp-section-title">Evacuation & Navigation Corridor</div>
+          <div class="insp-info-card" id="insp-route-card">
+            <div class="card-status-row">
+              <span class="badge badge-ok" id="insp-route-status">SAFE DETOUR</span>
+              <span id="insp-route-distance">Estimated: 6.5 km</span>
+            </div>
+            <div class="card-desc" id="insp-route-steps">
+              Corridor avoids closed hazard segment SEG-WC via North District detour.
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Interactive Control Room Actions -->
+        <div class="inspector-actions">
+          <button class="btn btn-primary" id="insp-btn-ack">
+            <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+            Acknowledge Incident
+          </button>
+          <button class="btn btn-secondary" id="insp-btn-locate">
+            <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            Focus on Vector Radar
+          </button>
+          <button class="btn btn-secondary" id="insp-btn-siren">
+            <svg class="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Radio Unit Dispatch
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script src="static/app.js"></script>
+</body>
+</html>
