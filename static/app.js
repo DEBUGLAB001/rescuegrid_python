@@ -245,7 +245,8 @@
     // 3. District Intersection Nodes
     Object.entries(nodeCoords).forEach(([name, pos]) => {
       let labelOffset = -18;
-      if (name === "Central Plaza") labelOffset = -16;
+      if (name === "Eastside Industrial") labelOffset = 24;
+      if (name === "Central Plaza") labelOffset = 24;
       if (name === "Harbor Medical") labelOffset = 24;
 
       svg += `
@@ -376,7 +377,7 @@
       pin.addEventListener("click", (e) => {
         e.stopPropagation();
         const incId = pin.getAttribute("data-incident-id");
-        if (incId) selectIncident(incId, true);
+        if (incId) selectIncident(incId, true, false);
       });
     });
 
@@ -423,7 +424,7 @@
   // INCIDENT INSPECTOR & SELECTION (Instant Click Response)
   // ==========================================================================
 
-  function selectIncident(incId, openModal = true) {
+  function selectIncident(incId, openModal = true, shouldScroll = false) {
     selectedIncidentId = incId;
 
     // Highlight card in queue
@@ -431,14 +432,16 @@
     cards.forEach(card => {
       if (card.getAttribute("data-incident-id") === incId) {
         card.classList.add("is-selected");
-        card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        if (shouldScroll) {
+          card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
       } else {
         card.classList.remove("is-selected");
       }
     });
 
     // Re-render map to draw guidance lines and radar target
-    if (currentState) {
+    if (currentState && el.svgMapWrapper) {
       renderMap(currentState);
     }
 
@@ -573,14 +576,14 @@
     cards.forEach(card => {
       card.addEventListener("click", () => {
         const id = card.getAttribute("data-incident-id");
-        if (id) selectIncident(id, true);
+        if (id) selectIncident(id, true, false);
       });
 
       card.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           const id = card.getAttribute("data-incident-id");
-          if (id) selectIncident(id, true);
+          if (id) selectIncident(id, true, false);
         }
       });
     });
