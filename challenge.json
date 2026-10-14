@@ -1,0 +1,7 @@
+{
+  "runtime": "python-flask",
+  "port": 5000,
+  "install_command": "pip install -r requirements.txt",
+  "start_command": "bash start.sh",
+  "test_command": "python tests/run_tests.py"
+}
