@@ -1,9 +1,11 @@
 """RescueGrid Flask Application.
 
 Serves the control room operations dashboard and REST API.
+Renders server-side Jinja2 templates and supports live state polling.
 """
 
 import os
+import glob
 import hashlib
 import time
 from flask import Flask, render_template, jsonify, make_response, request
@@ -43,14 +45,18 @@ def apply_caching_controls(response):
 
 
 def compute_asset_hash() -> str:
-    """Compute combined hash of frontend templates and static assets."""
+    """Compute combined hash of frontend templates, static assets, and backend modules."""
     hasher = hashlib.md5()
     watch_files = [
         os.path.join("templates", "index.html"),
         os.path.join("static", "styles.css"),
         os.path.join("static", "app.js")
     ]
-    for filepath in watch_files:
+    # Also watch all python backend domain modules
+    py_files = glob.glob(os.path.join("rescuegrid", "*.py"))
+    watch_files.extend(py_files)
+
+    for filepath in sorted(watch_files):
         if os.path.exists(filepath):
             try:
                 mtime = os.path.getmtime(filepath)
@@ -64,7 +70,10 @@ def compute_asset_hash() -> str:
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    service = get_service()
+    state = service.get_full_state()
+    state["asset_version"] = compute_asset_hash()
+    return render_template("index.html", state=state)
 
 
 @app.route("/api/state", methods=["GET"])
@@ -85,7 +94,7 @@ def recompute_state():
 
 @app.route("/api/version", methods=["GET"])
 def get_version():
-    """Returns version hash of templates and static assets to trigger hot reload."""
+    """Returns version hash of templates, assets, and backend domain logic."""
     asset_hash = compute_asset_hash()
     return jsonify({
         "asset_version": asset_hash,
