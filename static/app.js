@@ -267,7 +267,7 @@
     }).join("");
   }
 
-  // 2. CENTRAL SVG MAP VISUALIZATION
+  // 2. CENTRAL SVG MAP VISUALIZATION (Light Theme Optimized)
   function renderSvgMap(data) {
     const nodeCoords = data.node_coordinates || {};
     const roadSegments = data.road_segments || [];
@@ -282,17 +282,10 @@
         <defs>
           <!-- Grid Pattern -->
           <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
-            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#132038" stroke-width="0.7"/>
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#e2e8f0" stroke-width="0.8"/>
           </pattern>
           <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
@@ -304,8 +297,8 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- River feature -->
-        <path d="M 50 210 Q 220 180 320 280 T 550 300" fill="none" stroke="#0e1a2f" stroke-width="24" stroke-linecap="round"/>
-        <path d="M 50 210 Q 220 180 320 280 T 550 300" fill="none" stroke="#162744" stroke-width="12" stroke-linecap="round"/>
+        <path d="M 50 210 Q 220 180 320 280 T 550 300" fill="none" stroke="#e0f2fe" stroke-width="26" stroke-linecap="round"/>
+        <path d="M 50 210 Q 220 180 320 280 T 550 300" fill="none" stroke="#bae6fd" stroke-width="14" stroke-linecap="round"/>
     `;
 
     // Render Road Segments
@@ -317,19 +310,18 @@
       const isRouteSeg = routeSegmentIds.has(seg.id);
       const isClosed = seg.is_closed;
 
-      let strokeColor = "#223552";
+      let strokeColor = "#94a3b8";
       let strokeWidth = 3;
       let strokeDash = "none";
       let filterAttr = "";
 
       if (isClosed) {
-        strokeColor = "#ef4444";
+        strokeColor = "#dc2626";
         strokeWidth = 3.5;
         strokeDash = "6,4";
-        filterAttr = 'filter="url(#glow-red)"';
       } else if (isRouteSeg) {
-        strokeColor = "#06b6d4";
-        strokeWidth = 4;
+        strokeColor = "#0284c7";
+        strokeWidth = 4.5;
         filterAttr = 'filter="url(#glow-cyan)"';
       }
 
@@ -340,16 +332,16 @@
         <line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" 
               stroke="${strokeColor}" stroke-width="${strokeWidth}" 
               stroke-dasharray="${strokeDash}" ${filterAttr} />
-        <rect x="${midX - 18}" y="${midY - 8}" width="36" height="15" rx="3" fill="#091122" stroke="${isClosed ? '#ef4444' : '#1e293b'}" stroke-width="1" />
-        <text x="${midX}" y="${midY + 3}" fill="${isClosed ? '#fca5a5' : '#94a3b8'}" font-size="9" font-family="monospace" text-anchor="middle" font-weight="600">
+        <rect x="${midX - 18}" y="${midY - 8}" width="36" height="16" rx="3" fill="#ffffff" stroke="${isClosed ? '#f87171' : '#cbd5e1'}" stroke-width="1.2" />
+        <text x="${midX}" y="${midY + 3.5}" fill="${isClosed ? '#b91c1c' : '#334155'}" font-size="9" font-family="monospace" text-anchor="middle" font-weight="700">
           ${seg.distance}km
         </text>
       `;
 
       if (isClosed) {
         svgHtml += `
-          <circle cx="${midX}" cy="${midY - 14}" r="7" fill="#ef4444"/>
-          <text x="${midX}" y="${midY - 10}" fill="#fff" font-size="9" font-weight="bold" text-anchor="middle">!</text>
+          <circle cx="${midX}" cy="${midY - 14}" r="7" fill="#dc2626"/>
+          <text x="${midX}" y="${midY - 10}" fill="#ffffff" font-size="9" font-weight="bold" text-anchor="middle">!</text>
         `;
       }
     });
@@ -357,8 +349,8 @@
     // Render Intersections / Nodes
     Object.entries(nodeCoords).forEach(([name, pos]) => {
       svgHtml += `
-        <circle cx="${pos.x}" cy="${pos.y}" r="6" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
-        <text x="${pos.x}" y="${pos.y - 12}" fill="#cbd5e1" font-size="10" font-family="sans-serif" font-weight="600" text-anchor="middle">
+        <circle cx="${pos.x}" cy="${pos.y}" r="6" fill="#ffffff" stroke="#2563eb" stroke-width="2.5"/>
+        <text x="${pos.x}" y="${pos.y - 12}" fill="#0f172a" font-size="10.5" font-family="sans-serif" font-weight="700" text-anchor="middle">
           ${name}
         </text>
       `;
@@ -370,9 +362,9 @@
       if (!pos) return;
       svgHtml += `
         <g transform="translate(${pos.x}, ${pos.y})">
-          <rect x="-10" y="-10" width="20" height="20" rx="3" fill="#083344" stroke="#06b6d4" stroke-width="1.5"/>
-          <path d="M 0 -6 L 0 6 M -6 0 L 6 0" stroke="#06b6d4" stroke-width="2"/>
-          <text x="14" y="3" fill="#38bdf8" font-size="9" font-family="monospace" font-weight="600">
+          <rect x="-10" y="-10" width="20" height="20" rx="4" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.8"/>
+          <path d="M 0 -6 L 0 6 M -6 0 L 6 0" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round"/>
+          <text x="14" y="3.5" fill="#0369a1" font-size="9.5" font-family="monospace" font-weight="700">
             ${h.id} (${h.available_beds} beds)
           </text>
         </g>
@@ -386,8 +378,8 @@
       const isAssigned = u.status === "assigned";
       svgHtml += `
         <g transform="translate(${pos.x}, ${pos.y})">
-          <circle cx="0" cy="0" r="8" fill="${isAssigned ? '#064e3b' : '#312e81'}" stroke="${isAssigned ? '#10b981' : '#6366f1'}" stroke-width="1.5"/>
-          <text x="0" y="3" fill="#fff" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">
+          <circle cx="0" cy="0" r="9" fill="${isAssigned ? '#ecfdf5' : '#eff6ff'}" stroke="${isAssigned ? '#059669' : '#2563eb'}" stroke-width="2"/>
+          <text x="0" y="3.5" fill="${isAssigned ? '#065f46' : '#1e40af'}" font-size="8.5" font-family="monospace" font-weight="800" text-anchor="middle">
             ${u.id.replace('U-0', 'U')}
           </text>
         </g>
@@ -401,12 +393,12 @@
       const isCritical = inc.base_severity >= 4;
       svgHtml += `
         <g transform="translate(${pos.x}, ${pos.y})">
-          <circle cx="0" cy="0" r="14" fill="none" stroke="${isCritical ? '#ef4444' : '#f59e0b'}" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.8"/>
-          <circle cx="0" cy="0" r="9" fill="${isCritical ? '#7f1d1d' : '#78350f'}" stroke="${isCritical ? '#ef4444' : '#f59e0b'}" stroke-width="2"/>
-          <text x="0" y="3" fill="#fff" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">
+          <circle cx="0" cy="0" r="14" fill="none" stroke="${isCritical ? '#dc2626' : '#d97706'}" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.85"/>
+          <circle cx="0" cy="0" r="9" fill="${isCritical ? '#fee2e2' : '#fef3c7'}" stroke="${isCritical ? '#dc2626' : '#d97706'}" stroke-width="2"/>
+          <text x="0" y="3.5" fill="${isCritical ? '#991b1b' : '#92400e'}" font-size="8.5" font-family="monospace" font-weight="800" text-anchor="middle">
             ${inc.base_severity}
           </text>
-          <text x="0" y="24" fill="${isCritical ? '#fca5a5' : '#fde68a'}" font-size="9" font-family="monospace" font-weight="bold" text-anchor="middle">
+          <text x="0" y="24" fill="${isCritical ? '#b91c1c' : '#b45309'}" font-size="9.5" font-family="monospace" font-weight="800" text-anchor="middle">
             ${inc.id}
           </text>
         </g>
